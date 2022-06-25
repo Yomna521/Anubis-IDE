@@ -1,18 +1,15 @@
-#############      author => Anubis Graduation Team        ############
-#############      this project is part of my graduation project and it intends to make a fully functioned IDE from scratch    ########
-#############      I've borrowed a function (serial_ports()) from a guy in stack overflow whome I can't remember his name, so I gave hime the copyrights of this function, thank you  ########
-
-
 import sys
 import glob
 import serial
 
-import Python_Coloring
+import Coloring
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from pathlib import Path
+import MyPath
+
 
 def serial_ports():
     """ Lists serial port names
@@ -52,7 +49,6 @@ def serial_ports():
 #
 #
 class Signal(QObject):
-
     # initializing a Signal which will take (string) as an input
     reading = pyqtSignal(str)
 
@@ -60,15 +56,18 @@ class Signal(QObject):
     def __init__(self):
         QObject.__init__(self)
 
+
 #
 #
 ############ end of Class ############
 #
 #
 
-# Making text editor as A global variable (to solve the issue of being local to (self) in widget class)
+# Making text editor as A global variable
+# (to solve the issue of being local to (self) in widget class)
 text = QTextEdit
 text2 = QTextEdit
+
 
 #
 #
@@ -85,14 +84,14 @@ class text_widget(QWidget):
     def __init__(self):
         super().__init__()
         self.itUI()
+
     def itUI(self):
         global text
         text = QTextEdit()
-        Python_Coloring.PythonHighlighter(text)
+        Coloring.Highlighter(text)
         hbox = QHBoxLayout()
         hbox.addWidget(text)
         self.setLayout(hbox)
-
 
 
 #
@@ -100,7 +99,6 @@ class text_widget(QWidget):
 ############ end of Class ############
 #
 #
-
 
 
 #
@@ -119,11 +117,11 @@ class Widget(QWidget):
         self.initUI()
 
     def initUI(self):
-
-        # This widget is responsible of making Tab in IDE which makes the Text editor looks nice
+        # This widget is responsible of making Tab in IDE which makes the
+        # Text editor looks nice
         tab = QTabWidget()
         tx = text_widget()
-        tab.addTab(tx, "Tab"+"1")
+        tab.addTab(tx, "Tab" + "1")
 
         # second editor in which the error messeges and succeeded connections will be shown
         global text2
@@ -132,12 +130,14 @@ class Widget(QWidget):
         # defining a Treeview variable to use it in showing the directory included files
         self.treeview = QTreeView()
 
-        # making a variable (path) and setting it to the root path (surely I can set it to whatever the root I want, not the default)
-        #path = QDir.rootPath()
+        # making a variable (path) and setting it to the root path
+        # (surely I can set it to whatever the root I want, not the default)
+        # path = QDir.rootPath()
 
         path = QDir.currentPath()
 
-        # making a Filesystem variable, setting its root path and applying somefilters (which I need) on it
+        # making a Filesystem variable, setting its root path and applying somefilters
+        # (which I need) on it
         self.dirModel = QFileSystemModel()
         self.dirModel.setRootPath(QDir.rootPath())
 
@@ -154,7 +154,8 @@ class Widget(QWidget):
         Right_hbox = QHBoxLayout()
 
         # after defining variables of type QVBox and QHBox
-        # I will Assign treevies variable to the left one and the first text editor in which the code will be written to the right one
+        # I will Assign treevies variable to the left one and the first text editor
+        # in which the code will be written to the right one
         Left_hbox.addWidget(self.treeview)
         Right_hbox.addWidget(tab)
 
@@ -166,13 +167,15 @@ class Widget(QWidget):
         Right_hbox_Layout = QWidget()
         Right_hbox_Layout.setLayout(Right_hbox)
 
-        # I defined a splitter to seperate the two variables (left, right) and make it more easily to change the space between them
+        # I defined a splitter to seperate the two variables (left, right) and
+        # make it more easily to change the space between them
         H_splitter = QSplitter(Qt.Horizontal)
         H_splitter.addWidget(Left_hbox_Layout)
         H_splitter.addWidget(Right_hbox_Layout)
         H_splitter.setStretchFactor(1, 1)
 
-        # I defined a new splitter to seperate between the upper and lower sides of the window
+        # I defined a new splitter to seperate between the upper
+        # and lower sides of the window
         V_splitter = QSplitter(Qt.Vertical)
         V_splitter.addWidget(H_splitter)
         V_splitter.addWidget(text2)
@@ -182,7 +185,8 @@ class Widget(QWidget):
 
         self.setLayout(Final_Layout)
 
-    # defining a new Slot (takes string) to save the text inside the first text editor
+    # defining a new Slot (takes string) to save the text inside
+    # the first text editor
     @pyqtSlot(str)
     def Saving(s):
         with open('main.py', 'w') as f:
@@ -196,15 +200,16 @@ class Widget(QWidget):
         text.setText(s)
 
     def on_clicked(self, index):
+        # Getting Path in a shared module for Extension deffering in Coloring
+        MyPath.nn = self.sender().model().filePath(index)
+        MyPath.nn = tuple([MyPath.nn])
 
-        nn = self.sender().model().filePath(index)
-        nn = tuple([nn])
-
-        if nn[0]:
-            f = open(nn[0],'r')
+        if MyPath.nn[0]:
+            f = open(MyPath.nn[0], 'r')
             with f:
                 data = f.read()
                 text.setText(data)
+
 
 #
 #
@@ -213,13 +218,16 @@ class Widget(QWidget):
 #
 
 # defining a new Slot (takes string)
-# Actually I could connect the (mainwindow) class directly to the (widget class) but I've made this function in between for futuer use
-# All what it do is to take the (input string) and establish a connection with the widget class, send the string to it
+# Actually I could connect the (mainwindow) class directly
+# to the (widget class) but I've made this function in between for futuer use
+# All what it do is to take the (input string) and establish
+# a connection with the widget class, send the string to it
 @pyqtSlot(str)
 def reading(s):
     b = Signal()
     b.reading.connect(Widget.Saving)
     b.reading.emit(s)
+
 
 # same as reading Function
 @pyqtSlot(str)
@@ -227,6 +235,8 @@ def Openning(s):
     b = Signal()
     b.reading.connect(Widget.Open)
     b.reading.emit(s)
+
+
 #
 #
 #
@@ -263,7 +273,8 @@ class UI(QMainWindow):
 
         # As any PC or laptop have many ports, so I need to list them to the User
         # so I made (Port_Action) to add the Ports got from (serial_ports()) function
-        # copyrights of serial_ports() function goes back to a guy from stackoverflow(whome I can't remember his name), so thank you (unknown)
+        # copyrights of serial_ports() function goes back to a guy from stackoverflow
+        # (whome I can't remember his name), so thank you (unknown)
         Port_Action = QMenu('port', self)
 
         res = serial_ports()
@@ -275,8 +286,8 @@ class UI(QMainWindow):
         # adding the menu which I made to the original (Port menu)
         Port.addMenu(Port_Action)
 
-#        Port_Action.triggered.connect(self.Port)
-#        Port.addAction(Port_Action)
+        #        Port_Action.triggered.connect(self.Port)
+        #        Port.addAction(Port_Action)
 
         # Making and adding Run Actions
         RunAction = QAction("Run", self)
@@ -294,37 +305,33 @@ class UI(QMainWindow):
         Open_Action.setShortcut("Ctrl+O")
         Open_Action.triggered.connect(self.open)
 
-
         filemenu.addAction(Save_Action)
         filemenu.addAction(Close_Action)
         filemenu.addAction(Open_Action)
-
 
         # Seting the window Geometry
         self.setGeometry(200, 150, 600, 500)
         self.setWindowTitle('Anubis IDE')
         self.setWindowIcon(QtGui.QIcon('Anubis.png'))
-        
 
         widget = Widget()
 
         self.setCentralWidget(widget)
         self.show()
 
-    ###########################        Start OF the Functions          ##################
+    ###########################Start OF the Functions##################
     def Run(self):
         if self.port_flag == 0:
             mytext = text.toPlainText()
-        #
-        ##### Compiler Part
-        #
-#            ide.create_file(mytext)
-#            ide.upload_file(self.portNo)
+            #
+            ##### Compiler Part
+            #
+            #            ide.create_file(mytext)
+            #            ide.upload_file(self.portNo)
             text2.append("Sorry, there is no attached compiler.")
 
         else:
             text2.append("Please Select Your Port Number First")
-
 
     # this function is made to get which port was selected by the user
     @QtCore.pyqtSlot()
@@ -333,23 +340,19 @@ class UI(QMainWindow):
         self.portNo = action.text()
         self.port_flag = 0
 
-
-
     # I made this function to save the code into a file
     def save(self):
         self.b.reading.emit("name")
 
-
     # I made this function to open a file and exhibits it to the user in a text editor
     def open(self):
-        file_name = QFileDialog.getOpenFileName(self,'Open File','/home')
+        file_name = QFileDialog.getOpenFileName(self, 'Open File', '/home')
 
         if file_name[0]:
-            f = open(file_name[0],'r')
+            f = open(file_name[0], 'r')
             with f:
                 data = f.read()
             self.Open_Signal.reading.emit(data)
-
 
 #
 #
@@ -358,7 +361,8 @@ class UI(QMainWindow):
 #
 
 if __name__ == '__main__':
+    MyPath.create()
     app = QApplication(sys.argv)
     ex = UI()
-    # ex = Widget()
+    ex = Widget()
     sys.exit(app.exec_())
